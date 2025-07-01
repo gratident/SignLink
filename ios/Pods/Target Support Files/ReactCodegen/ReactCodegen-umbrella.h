@@ -14,6 +14,14 @@
 #import "RCTModulesConformingToProtocolsProvider.h"
 #import "RCTThirdPartyComponentsProvider.h"
 #import "RCTUnstableModulesRequiringMainQueueSetupProvider.h"
+#import "react/renderer/components/RNCWebViewSpec/ComponentDescriptors.h"
+#import "react/renderer/components/RNCWebViewSpec/EventEmitters.h"
+#import "react/renderer/components/RNCWebViewSpec/Props.h"
+#import "react/renderer/components/RNCWebViewSpec/RCTComponentViewHelpers.h"
+#import "react/renderer/components/RNCWebViewSpec/ShadowNodes.h"
+#import "react/renderer/components/RNCWebViewSpec/States.h"
+#import "RNCWebViewSpec/RNCWebViewSpec.h"
+#import "RNCWebViewSpecJSI.h"
 
 FOUNDATION_EXPORT double ReactCodegenVersionNumber;
 FOUNDATION_EXPORT const unsigned char ReactCodegenVersionString[];

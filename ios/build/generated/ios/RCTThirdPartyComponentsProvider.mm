@@ -20,7 +20,7 @@
 
   dispatch_once(&nativeComponentsToken, ^{
     thirdPartyComponents = @{
-
+		@"RNCWebView": NSClassFromString(@"RNCWebView"), // react-native-webview
     };
   });
 
