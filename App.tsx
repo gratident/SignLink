@@ -276,73 +276,232 @@ const App = (): JSX.Element => {
                         if (!handGroup) return;
                     
                           console.log('手話表示:', signType);
-                    
-                          // 指の色を変更（一時的な効果）
-                          const fingers = handGroup.children.slice(1); // 手のひら以外
+
+                          // 手のひらと指を取得
+                          const palm = handGroup.children[0];
+                          const fingers = handGroup.children.slice(1); // [thumb, index, middle, ring, pinky]
+
+                          // アニメーション用の目標位置・回転を設定
+                          const targetRotations = [];
+                          const targetPositions = [];
+
+                          // デフォルト位置
+                          const defaultConfigs = [
+                            { // 親指
+                              rotation:{x:0, y:0, z:0.8},
+                              position:{x:-1.3, y:0.5, z:0.3}
+                            },
+                            { // 人差し指
+                              rotation:{x:0, y:0, z:0.1},
+                              position:{x:-0.7, y:1.6, z:0}
+                            },
+                            { // 中指
+                              rotation:{x:0, y:0, z:0},
+                              position:{x:-0.2, y:1.8, z:0}
+                            },
+                            { // 薬指
+                              rotation:{x:0, y:0, z:-0.1},
+                              position:{x:0.3, y:1.7, z:0}
+                            },
+                            { // 小指
+                              rotation:{x:0, y:0, z:-0.2},
+                              position:{x:0.8, y:1.4, z:0}
+                            },
+                          ]
                     
                           switch(signType) {
                           case 'あ':
-                            fingers.forEach(finger => {
-                              finger.children.forEach(part => {
-                                if (part.material) {
-                                    part.material.color.setHex(0xff8888); // 赤みがかった肌色
-                                }
-                              });
-                            });
+                            // 指文字「あ」: 親指を立て、他の指を握る
+                            targetRotations[0] = { x: 0.3, y: 0.5, z: 1.2 };    // 親指：立てる
+                            targetRotations[1] = { x: -1.8, y: 0, z: 0.1 };     // 人差し指：握る
+                            targetRotations[2] = { x: -1.8, y: 0, z: 0 };       // 中指：握る
+                            targetRotations[3] = { x: -1.8, y: 0, z: -0.1 };    // 薬指：握る
+                            targetRotations[4] = { x: -1.8, y: 0, z: -0.2 };    // 小指：握る
+                            
+                            targetPositions[0] = { x: -1.0, y: 1.2, z: 0.8 };   // 親指：前に出す
+                            targetPositions[1] = { x: -0.7, y: 0.8, z: 0 };     // 人差し指：下げる
+                            targetPositions[2] = { x: -0.2, y: 0.9, z: 0 };     // 中指：下げる
+                            targetPositions[3] = { x: 0.3, y: 0.8, z: 0 };      // 薬指：下げる
+                            targetPositions[4] = { x: 0.8, y: 0.7, z: 0 };      // 小指：下げる
+                            
+                            // 指の色を変更（視覚的フィードバック）
+                            setFingerColors([0xff6b6b, 0xcccccc, 0xcccccc, 0xcccccc, 0xcccccc]);
                             break;
+            
                           case 'い':
-                            fingers.forEach(finger => {
-                              finger.children.forEach(part => {
-                                if (part.material) {
-                                  part.material.color.setHex(0x88ff88); // 緑みがかった肌色
-                                }
-                              });
-                            });
+                            // 指文字「い」: 人差し指を立て、他を握る
+                            targetRotations[0] = { x: -1.5, y: 0, z: 0.8 };     // 親指：握る
+                            targetRotations[1] = { x: 0.2, y: 0, z: 0.1 };      // 人差し指：立てる
+                            targetRotations[2] = { x: -1.8, y: 0, z: 0 };       // 中指：握る
+                            targetRotations[3] = { x: -1.8, y: 0, z: -0.1 };    // 薬指：握る
+                            targetRotations[4] = { x: -1.8, y: 0, z: -0.2 };    // 小指：握る
+                            
+                            targetPositions[0] = { x: -1.3, y: 0.3, z: 0.3 };   // 親指：握る位置
+                            targetPositions[1] = { x: -0.7, y: 1.8, z: 0 };     // 人差し指：立てる
+                            targetPositions[2] = { x: -0.2, y: 0.9, z: 0 };     // 中指：下げる
+                            targetPositions[3] = { x: 0.3, y: 0.8, z: 0 };      // 薬指：下げる
+                            targetPositions[4] = { x: 0.8, y: 0.7, z: 0 };      // 小指：下げる
+                            
+                            setFingerColors([0xcccccc, 0x4ecdc4, 0xcccccc, 0xcccccc, 0xcccccc]);
                             break;
+            
                           case 'う':
-                            fingers.forEach(finger => {
-                                finger.children.forEach(part => {
-                                    if (part.material) {
-                                        part.material.color.setHex(0x8888ff); // 青みがかった肌色
-                                    }
-                                });
-                            });
+                            // 指文字「う」: 人差し指・中指を立てる
+                            targetRotations[0] = { x: -1.5, y: 0, z: 0.8 };     // 親指：握る
+                            targetRotations[1] = { x: 0.2, y: 0, z: 0.1 };      // 人差し指：立てる
+                            targetRotations[2] = { x: 0.2, y: 0, z: 0 };        // 中指：立てる
+                            targetRotations[3] = { x: -1.8, y: 0, z: -0.1 };    // 薬指：握る
+                            targetRotations[4] = { x: -1.8, y: 0, z: -0.2 };    // 小指：握る
+                            
+                            targetPositions[0] = { x: -1.3, y: 0.3, z: 0.3 };   // 親指：握る
+                            targetPositions[1] = { x: -0.7, y: 1.8, z: 0 };     // 人差し指：立てる
+                            targetPositions[2] = { x: -0.2, y: 2.0, z: 0 };     // 中指：立てる
+                            targetPositions[3] = { x: 0.3, y: 0.8, z: 0 };      // 薬指：下げる
+                            targetPositions[4] = { x: 0.8, y: 0.7, z: 0 };      // 小指：下げる
+                            
+                            setFingerColors([0xcccccc, 0x45b7d1, 0x45b7d1, 0xcccccc, 0xcccccc]);
                             break;
+            
                           case 'え':
-                            fingers.forEach(finger => {
-                              finger.children.forEach(part => {
-                                if (part.material) {
-                                  part.material.color.setHex(0xffff88); // 黄色みがかった肌色
-                                }
-                              });
-                            });
+                            // 指文字「え」: 人差し指・中指・薬指を立てる
+                            targetRotations[0] = { x: -1.5, y: 0, z: 0.8 };     // 親指：握る
+                            targetRotations[1] = { x: 0.2, y: 0, z: 0.1 };      // 人差し指：立てる
+                            targetRotations[2] = { x: 0.2, y: 0, z: 0 };        // 中指：立てる
+                            targetRotations[3] = { x: 0.2, y: 0, z: -0.1 };     // 薬指：立てる
+                            targetRotations[4] = { x: -1.8, y: 0, z: -0.2 };    // 小指：握る
+                            
+                            targetPositions[0] = { x: -1.3, y: 0.3, z: 0.3 };   // 親指：握る
+                            targetPositions[1] = { x: -0.7, y: 1.8, z: 0 };     // 人差し指：立てる
+                            targetPositions[2] = { x: -0.2, y: 2.0, z: 0 };     // 中指：立てる
+                            targetPositions[3] = { x: 0.3, y: 1.9, z: 0 };      // 薬指：立てる
+                            targetPositions[4] = { x: 0.8, y: 0.7, z: 0 };      // 小指：下げる
+                            
+                            setFingerColors([0xcccccc, 0xf7dc6f, 0xf7dc6f, 0xf7dc6f, 0xcccccc]);
                             break;
+            
                           case 'お':
-                            fingers.forEach(finger => {
-                              finger.children.forEach(part => {
-                                if (part.material) {
-                                  part.material.color.setHex(0xff88ff); // 紫みがかった肌色
-                                }
-                              });
-                            });
+                            // 指文字「お」: 4本指を立て、親指を握る
+                            targetRotations[0] = { x: -1.5, y: 0, z: 0.8 };     // 親指：握る
+                            targetRotations[1] = { x: 0.2, y: 0, z: 0.1 };      // 人差し指：立てる
+                            targetRotations[2] = { x: 0.2, y: 0, z: 0 };        // 中指：立てる
+                            targetRotations[3] = { x: 0.2, y: 0, z: -0.1 };     // 薬指：立てる
+                            targetRotations[4] = { x: 0.2, y: 0, z: -0.2 };     // 小指：立てる
+                            
+                            targetPositions[0] = { x: -1.3, y: 0.3, z: 0.3 };   // 親指：握る
+                            targetPositions[1] = { x: -0.7, y: 1.8, z: 0 };     // 人差し指：立てる
+                            targetPositions[2] = { x: -0.2, y: 2.0, z: 0 };     // 中指：立てる
+                            targetPositions[3] = { x: 0.3, y: 1.9, z: 0 };      // 薬指：立てる
+                            targetPositions[4] = { x: 0.8, y: 1.6, z: 0 };      // 小指：立てる
+                            
+                            setFingerColors([0xcccccc, 0xbb8fce, 0xbb8fce, 0xbb8fce, 0xbb8fce]);
                             break;
+            
                           default:
-                            // 元の肌色に戻す
-                            fingers.forEach(finger => {
-                              finger.children.forEach(part => {
-                                if (part.material) {
-                                  part.material.color.setHex(0xFFDBC1);
-                                }
-                              });
-                            });
+                            // デフォルト（開いた手）
+                            for (let i = 0; i < 5; i++) {
+                              targetRotations[i] = defaultConfigs[i].rotation;
+                              targetPositions[i] = defaultConfigs[i].position;
+                            }
+                            setFingerColors([0xFFDBC1, 0xFFDBC1, 0xFFDBC1, 0xFFDBC1, 0xFFDBC1]);
                         }
+
+                        // スムーズなアニメーション実行
+                        animateFingers(targetRotations, targetPositions);
                     
                         // React Nativeに結果を送信
                         window.ReactNativeWebView?.postMessage(JSON.stringify({
                           type: 'SIGN_CHANGED',
                           sign: signType,
-                          model: 'hand'
+                          model: 'hand',
+                          description: getSignDescription(signType)
                         }));
+                      }
+                      
+                      // 指の色を設定する関数
+                      function setFingerColors(colors) {
+                          if (!handGroup) return;
+                          
+                          const fingers = handGroup.children.slice(1);
+                          fingers.forEach((finger, index) => {
+                              finger.children.forEach(part => {
+                                  if (part.material) {
+                                      part.material.color.setHex(colors[index] || 0xFFDBC1);
+                                  }
+                              });
+                          });
+                      }
+                      
+                      // 指のアニメーション関数
+                      function animateFingers(targetRotations, targetPositions) {
+                          if (!handGroup) return;
+                          
+                          const fingers = handGroup.children.slice(1);
+                          const animationDuration = 1000; // 1秒間のアニメーション
+                          const startTime = Date.now();
+                          
+                          // 現在の位置・回転を記録
+                          const initialRotations = fingers.map(finger => ({
+                              x: finger.rotation.x,
+                              y: finger.rotation.y, 
+                              z: finger.rotation.z
+                          }));
+                          
+                          const initialPositions = fingers.map(finger => ({
+                              x: finger.position.x,
+                              y: finger.position.y,
+                              z: finger.position.z
+                          }));
+                          
+                          function animate() {
+                              const elapsed = Date.now() - startTime;
+                              const progress = Math.min(elapsed / animationDuration, 1);
+                              
+                              // イージング関数（スムーズな動き）
+                              const easeInOut = t => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                              const easedProgress = easeInOut(progress);
+                              
+                              // 各指をアニメーション
+                              fingers.forEach((finger, index) => {
+                                  if (targetRotations[index]) {
+                                      // 回転の補間
+                                      finger.rotation.x = initialRotations[index].x + 
+                                          (targetRotations[index].x - initialRotations[index].x) * easedProgress;
+                                      finger.rotation.y = initialRotations[index].y + 
+                                          (targetRotations[index].y - initialRotations[index].y) * easedProgress;
+                                      finger.rotation.z = initialRotations[index].z + 
+                                          (targetRotations[index].z - initialRotations[index].z) * easedProgress;
+                                  }
+                                  
+                                  if (targetPositions[index]) {
+                                      // 位置の補間
+                                      finger.position.x = initialPositions[index].x + 
+                                          (targetPositions[index].x - initialPositions[index].x) * easedProgress;
+                                      finger.position.y = initialPositions[index].y + 
+                                          (targetPositions[index].y - initialPositions[index].y) * easedProgress;
+                                      finger.position.z = initialPositions[index].z + 
+                                          (targetPositions[index].z - initialPositions[index].z) * easedProgress;
+                                  }
+                              });
+                              
+                              // アニメーション継続判定
+                              if (progress < 1) {
+                                  requestAnimationFrame(animate);
+                              }
+                          }
+                          
+                          animate();
+                      }
+
+                      // 手話の説明を取得
+                      function getSignDescription(signType) {
+                          const descriptions = {
+                              'あ': '親指を立て、他の指を握る',
+                              'い': '人差し指を立て、他の指を握る', 
+                              'う': '人差し指と中指を立てる',
+                              'え': '人差し指、中指、薬指を立てる',
+                              'お': '4本指を立て、親指を握る'
+                          };
+                          return descriptions[signType] || '開いた手';
                       }
 
                       window.addEventListener('resize', () => {
@@ -378,7 +537,7 @@ const App = (): JSX.Element => {
                         }, 2000);
                       }
                     </script>
-                  /body>
+                  </body>
                 </html>
               `
             }}
