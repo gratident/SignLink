@@ -50,206 +50,376 @@ const App = (): JSX.Element => {
         {/* 3D手話表示エリア（WebView） */}
         <View style={styles.avatarArea}>
           <WebView
-          ref={webViewRef}
-          source={{ 
-            // iOSの場合はローカルファイルではなく、インラインHTMLを使用
-            html: `
-            <!DOCTYPE html>
-              <html>
-                <head>
-                  <meta charset="utf-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <style>
-                    body {
-                      margin: 0;
-                      padding: 0;
-                      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-                      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                      overflow: hidden;
-                    }
-                    
-                    #container {
-                      width: 100vw;
-                      height: 100vh;
-                      position: relative;
-                    }
-        
-                    #info {
-                      position: absolute;
-                      top: 10px;
-                      left: 10px;
-                      color: #4285f4;
-                      font-weight: bold;
-                      z-index: 100;
-                      font-size: 14px;
-                    }
-                  </style>
-                </head>
-
-                <body>
-                  <div id="container">
-                  <div id="info">SignLink 3D Display</div>
-                </div>
-
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-                <script>
-                  let scene, camera, renderer, cube;
-                  function init() {
-                    try {
-                      scene = new THREE.Scene();
-                      scene.background = new THREE.Color(0xf0f0f0);
-
-                      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                      camera.position.z = 5;
-
-                      renderer = new THREE.WebGLRenderer({ antialias: true });
-                      renderer.setSize(window.innerWidth, window.innerHeight);
-                      document.getElementById('container').appendChild(renderer.domElement);
-
-                      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-                      scene.add(ambientLight);
-
-                      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                      directionalLight.position.set(10, 10, 5);
-                      scene.add(directionalLight);
-
-                      const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-                      const material = new THREE.MeshLambertMaterial({ 
-                        color: 0x4285f4,
-                        transparent: true,
-                        opacity: 0.8
-                      });
-                      cube = new THREE.Mesh(geometry, material);
-                      scene.add(cube);
-
-                      animate();
-
-                      // 成功メッセージを送信
-                      window.ReactNativeWebView?.postMessage(JSON.stringify({
-                        type: 'READY',
-                        message: '3D表示準備完了'
-                      }));
-                    } catch (error) {
-                      console.error('Three.js初期化エラー:', error);
-                      document.getElementById('info').innerHTML = 'Three.js読み込みエラー';
-                    }
-                  }
-
-                  function animate() {
-                    if (!cube) return;
-                    requestAnimationFrame(animate);
-
-                    cube.rotation.x += 0.01;
-                    cube.rotation.y += 0.01;
-
-                    renderer.render(scene, camera);
-                  }
-
-                  function showSign(signType) {
-                    if (!cube) return;
-                    console.log('手話表示:', signType);
-
-                    switch(signType) {
-                      case 'あ':
-                        cube.material.color.setHex(0xff4444);
-                        break;
-                      case 'い':
-                        cube.material.color.setHex(0x44ff44);
-                        break;
-                      case 'う':
-                        cube.material.color.setHex(0x4444ff);
-                        break;
-                      case 'え':
-                        cube.material.color.setHex(0xffff44);
-                        break;
-                      case 'お':
-                        cube.material.color.setHex(0xff44ff);
-                        break;
-                      default:
-                        cube.material.color.setHex(0x4285f4);
-                    }
-
-                    // React Nativeに結果を送信
-                    window.ReactNativeWebView?.postMessage(JSON.stringify({
-                      type: 'SIGN_CHANGED',
-                      sign: signType
-                    }));
-                  }
-
-                  window.addEventListener('resize', () => {
-                    if (!camera || !renderer) return;
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                  });
-
-                  // React Nativeからのメッセージ受信
-                  window.addEventListener('message', (event) => {
-                    try {
-                      const data = JSON.parse(event.data);
-                      if (data.type === 'SHOW_SIGN') {
-                        showSign(data.sign);
+            ref={webViewRef}
+            source={{ 
+              html: `
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                      body {
+                        margin: 0;
+                        padding: 0;
+                        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                        overflow: hidden;
                       }
-                    } catch (error) {
-                      console.error('メッセージ解析エラー:', error);
-                    }
-                  });
+                      #container {
+                        width: 100vw;
+                        height: 100vh;
+                        position: relative;
+                      }
+                      #info {
+                        position: absolute;
+                        top: 10px;
+                        left: 10px;
+                        color: #4285f4;
+                        font-weight: bold;
+                        z-index: 100;
+                        font-size: 14px;
+                      }
+                    </style>
+                  </head>
+                  <body>
+                    <div id="container">
+                      <div id="info">SignLink 3D Hand Model</div>
+                    </div>
 
-                  // Three.jsが読み込まれてから初期化
-                  if (typeof THREE !== 'undefined') {
-                    init();
-                  } else {
-                    document.getElementById('info').innerHTML = 'Three.js読み込み中...';
-                    setTimeout(() => {
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+                    <script>
+                      let scene, camera, renderer, handGroup;
+                      let isHandModel = true; // 手形モデルフラグ
+
+                      // 基本手形モデル作成関数
+                      function createBasicHand() {
+                        const group = new THREE.Group();
+                    
+                        // 手のひら（楕円形に近い形状）
+                        const palmGeometry = new THREE.BoxGeometry(2.2, 2.8, 0.6);
+                        const palmMaterial = new THREE.MeshLambertMaterial({ 
+                          color: 0xFFDBC1,  // 肌色
+                          transparent: true,
+                          opacity: 0.95
+                        });
+                        const palm = new THREE.Mesh(palmGeometry, palmMaterial);
+                        palm.position.set(0, 0, 0);
+                        group.add(palm);
+                    
+                        // 指の設定（位置、サイズ、角度）
+                        const fingerConfigs = [
+                          { 
+                              name: 'thumb', 
+                              x: -1.3, y: 0.5, z: 0.3,
+                              length: 1.2, radius: 0.18,
+                              rotation: { x: 0, y: 0, z: 0.8 }
+                          },
+                          { 
+                              name: 'index', 
+                              x: -0.7, y: 1.6, z: 0,
+                              length: 1.8, radius: 0.15,
+                              rotation: { x: 0, y: 0, z: 0.1 }
+                          },
+                          { 
+                              name: 'middle', 
+                              x: -0.2, y: 1.8, z: 0,
+                              length: 2.0, radius: 0.15,
+                              rotation: { x: 0, y: 0, z: 0 }
+                          },
+                          { 
+                              name: 'ring', 
+                              x: 0.3, y: 1.7, z: 0,
+                              length: 1.7, radius: 0.14,
+                              rotation: { x: 0, y: 0, z: -0.1 }
+                          },
+                          { 
+                              name: 'pinky', 
+                              x: 0.8, y: 1.4, z: 0,
+                              length: 1.3, radius: 0.12,
+                              rotation: { x: 0, y: 0, z: -0.2 }
+                          }
+                        ];
+                    
+                        // 各指を作成
+                        fingerConfigs.forEach((config, index) => {
+                          const fingerGroup = new THREE.Group();
+                        
+                          // 指の基本形状（円柱）
+                          const fingerGeometry = new THREE.CylinderGeometry(
+                            config.radius * 0.8,  // 先端を細く
+                            config.radius,        // 根元
+                            config.length, 
+                            8
+                          );
+                        
+                          const fingerMaterial = new THREE.MeshLambertMaterial({ 
+                            color: 0xFFDBC1,  // 肌色
+                            transparent: true,
+                            opacity: 0.95
+                          });
+                        
+                          const finger = new THREE.Mesh(fingerGeometry, fingerMaterial);
+                        
+                          // 指の向きを調整（デフォルトのY軸方向から適切な方向に）
+                          finger.position.set(0, config.length / 2, 0);
+                          fingerGroup.add(finger);
+                        
+                          // 指の関節部分（小さな球体）
+                          const jointGeometry = new THREE.SphereGeometry(config.radius * 0.9, 8, 6);
+                          const jointMaterial = new THREE.MeshLambertMaterial({ 
+                            color: 0xFFD4A8,  // 少し濃い肌色
+                            transparent: true,
+                            opacity: 0.9
+                          });
+                          const joint = new THREE.Mesh(jointGeometry, jointMaterial);
+                          joint.position.set(0, config.length * 0.7, 0);
+                          fingerGroup.add(joint);
+                        
+                          // 指先（小さな球体）
+                          const tipGeometry = new THREE.SphereGeometry(config.radius * 0.7, 8, 6);
+                          const tipMaterial = new THREE.MeshLambertMaterial({ 
+                            color: 0xFFCBA8,  // 指先の色
+                            transparent: true,
+                            opacity: 0.95
+                          });
+                          const tip = new THREE.Mesh(tipGeometry, tipMaterial);
+                          tip.position.set(0, config.length, 0);
+                          fingerGroup.add(tip);
+                        
+                          // 指グループの位置と回転を設定
+                          fingerGroup.position.set(config.x, config.y, config.z);
+                          fingerGroup.rotation.set(config.rotation.x, config.rotation.y, config.rotation.z);
+                        
+                          // 指に名前を付けて識別しやすくする
+                          fingerGroup.name = config.name;
+                        
+                          group.add(fingerGroup);
+                        });
+                        return group;
+                      }
+
+                      function init() {
+                        try {
+                          scene = new THREE.Scene();
+                          scene.background = new THREE.Color(0xf0f4f8);
+
+                          camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                          camera.position.set(0, 2, 6);  // 手形がよく見える位置
+                          camera.lookAt(0, 0, 0);
+
+                          renderer = new THREE.WebGLRenderer({ antialias: true });
+                          renderer.setSize(window.innerWidth, window.innerHeight);
+                          renderer.shadowMap.enabled = true;
+                          renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                          document.getElementById('container').appendChild(renderer.domElement);
+
+                          // ライト設定（手形がよく見えるように）
+                          const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+                          scene.add(ambientLight);
+
+                          const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+                          directionalLight.position.set(10, 15, 10);
+                          directionalLight.castShadow = true;
+                          directionalLight.shadow.mapSize.width = 2048;
+                          directionalLight.shadow.mapSize.height = 2048;
+                          scene.add(directionalLight);
+
+                          // 補助ライト（影を和らげる）
+                          const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+                          fillLight.position.set(-10, 5, 5);
+                          scene.add(fillLight);
+
+                          // 手形モデルを作成
+                          handGroup = createBasicHand();
+                          handGroup.castShadow = true;
+                          handGroup.receiveShadow = true;
+                          scene.add(handGroup);
+
+                          // 地面（影を受ける）
+                          const planeGeometry = new THREE.PlaneGeometry(15, 15);
+                          const planeMaterial = new THREE.MeshLambertMaterial({ 
+                            color: 0xffffff,
+                            transparent: true,
+                            opacity: 0.8
+                          });
+                          const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+                          plane.rotation.x = -Math.PI / 2;
+                          plane.position.y = -3;
+                          plane.receiveShadow = true;
+                          scene.add(plane);
+
+                          animate();
+                        
+                          // 成功メッセージを送信
+                          window.ReactNativeWebView?.postMessage(JSON.stringify({
+                            type: 'READY',
+                            message: '3D手形モデル準備完了'
+                          }));
+                        } catch (error) {
+                          console.error('Three.js初期化エラー:', error);
+                          document.getElementById('info').innerHTML = 'Three.js読み込みエラー';
+                        }
+                      }
+
+                      function animate() {
+                        if (!handGroup) return;
+                        requestAnimationFrame(animate);
+
+                        // 手形をゆっくり回転（手話が見やすいように）
+                        handGroup.rotation.y += 0.005;
+
+                        renderer.render(scene, camera);
+                      }
+
+                      function showSign(signType) {
+                        if (!handGroup) return;
+                    
+                          console.log('手話表示:', signType);
+                    
+                          // 指の色を変更（一時的な効果）
+                          const fingers = handGroup.children.slice(1); // 手のひら以外
+                    
+                          switch(signType) {
+                          case 'あ':
+                            fingers.forEach(finger => {
+                              finger.children.forEach(part => {
+                                if (part.material) {
+                                    part.material.color.setHex(0xff8888); // 赤みがかった肌色
+                                }
+                              });
+                            });
+                            break;
+                          case 'い':
+                            fingers.forEach(finger => {
+                              finger.children.forEach(part => {
+                                if (part.material) {
+                                  part.material.color.setHex(0x88ff88); // 緑みがかった肌色
+                                }
+                              });
+                            });
+                            break;
+                          case 'う':
+                            fingers.forEach(finger => {
+                                finger.children.forEach(part => {
+                                    if (part.material) {
+                                        part.material.color.setHex(0x8888ff); // 青みがかった肌色
+                                    }
+                                });
+                            });
+                            break;
+                          case 'え':
+                            fingers.forEach(finger => {
+                              finger.children.forEach(part => {
+                                if (part.material) {
+                                  part.material.color.setHex(0xffff88); // 黄色みがかった肌色
+                                }
+                              });
+                            });
+                            break;
+                          case 'お':
+                            fingers.forEach(finger => {
+                              finger.children.forEach(part => {
+                                if (part.material) {
+                                  part.material.color.setHex(0xff88ff); // 紫みがかった肌色
+                                }
+                              });
+                            });
+                            break;
+                          default:
+                            // 元の肌色に戻す
+                            fingers.forEach(finger => {
+                              finger.children.forEach(part => {
+                                if (part.material) {
+                                  part.material.color.setHex(0xFFDBC1);
+                                }
+                              });
+                            });
+                        }
+                    
+                        // React Nativeに結果を送信
+                        window.ReactNativeWebView?.postMessage(JSON.stringify({
+                          type: 'SIGN_CHANGED',
+                          sign: signType,
+                          model: 'hand'
+                        }));
+                      }
+
+                      window.addEventListener('resize', () => {
+                        if (!camera || !renderer) return;
+                        camera.aspect = window.innerWidth / window.innerHeight;
+                        camera.updateProjectionMatrix();
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                      });
+
+                      // React Nativeからのメッセージ受信
+                      window.addEventListener('message', (event) => {
+                        try {
+                          const data = JSON.parse(event.data);
+                          if (data.type === 'SHOW_SIGN') {
+                            showSign(data.sign);
+                          }
+                        } catch (error) {
+                          console.error('メッセージ解析エラー:', error);
+                        }
+                      });
+
+                      // Three.jsが読み込まれてから初期化
                       if (typeof THREE !== 'undefined') {
                         init();
                       } else {
-                        document.getElementById('info').innerHTML = 'Three.js読み込み失敗';
+                        document.getElementById('info').innerHTML = 'Three.js読み込み中...';
+                        setTimeout(() => {
+                          if (typeof THREE !== 'undefined') {
+                              init();
+                          } else {
+                              document.getElementById('info').innerHTML = 'Three.js読み込み失敗';
+                          }
+                        }, 2000);
                       }
-                    }, 2000);
-                  }
-                </script>
-              </body>
-            </html>`
-          }}
-        style={styles.webview}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        onMessage={(event) => {
-          try {
-            const data = JSON.parse(event.nativeEvent.data);
-            console.log('WebViewメッセージ:', data);
-          } catch (error) {
-            console.log('WebViewメッセージ（生）:', event.nativeEvent.data);
-          }
-        }}
-        onError={(error) => {
-          console.log('WebViewエラー:', error);
-        }}
-        onLoad={() => {
-          console.log('WebView読み込み完了');
-        }}
-        />
-        <Text style={styles.avatarTitle}>3D手話アバター（開発中）</Text>
-      </View>
+                    </script>
+                  /body>
+                </html>
+              `
+            }}
+            style={styles.webview}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            onMessage={(event) => {
+              try {
+                const data = JSON.parse(event.nativeEvent.data);
+                console.log('WebViewメッセージ:', data);
+              } catch (error) {
+                console.log('WebViewメッセージ（生）:', event.nativeEvent.data);
+              }
+            }}
+            onError={(error) => {
+              console.log('WebViewエラー:', error);
+            }}
+            onLoad={() => {
+              console.log('WebView読み込み完了');
+            }}
+          />
+          <Text style={styles.avatarTitle}>3D手形モデル（基本版）</Text>
+        </View>
 
         {/* あいうえおボタン */}
         <View style={styles.buttonContainer}>
           <Text style={styles.sectionTitle}>📝 指文字テスト（あいうえお）</Text>
-          <View style={styles.buttonRow}>
-            {['あ', 'い', 'う', 'え', 'お'].map((char) => (
-              <TouchableOpacity
-                key={char}
-                style={styles.charButton}
-                onPress={() => handleCharPress(char)}
-              >
-                <Text style={styles.charText}>{char}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <Text style={styles.instruction}>
-            ↑ ボタンをタップすると3D表示の色が変わります
-          </Text>
+            <View style={styles.buttonRow}>
+              {['あ', 'い', 'う', 'え', 'お'].map((char) => (
+                <TouchableOpacity
+                  key={char}
+                  style={styles.charButton}
+                  onPress={() => handleCharPress(char)}
+                >
+                  <Text style={styles.charText}>{char}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.instruction}>
+              ↑ ボタンをタップすると3D表示の色が変わります
+            </Text>
         </View>
 
         {/* 機能ボタン */}
@@ -271,18 +441,18 @@ const App = (): JSX.Element => {
         {/* 開発ステータス */}
         <View style={styles.statusArea}>
           <Text style={styles.statusTitle}>🚀 開発状況</Text>
-          <View style={styles.statusItem}>
-            <Text style={styles.statusTextCompleted}>✅ React Native環境構築完了</Text>
-          </View>
-          <View style={styles.statusItem}>
-            <Text style={styles.statusTextCompleted}>✅ SignLink基本UI実装完了</Text>
-          </View>
-          <View style={styles.statusItem}>
-            <Text style={styles.statusTextInProgress}>🔄 Three.js 3D表示統合中</Text>
-          </View>
-          <View style={styles.statusItem}>
-            <Text style={styles.statusTextPending}>⏳ 手形モデル作成予定</Text>
-          </View>
+            <View style={styles.statusItem}>
+              <Text style={styles.statusTextCompleted}>✅ React Native環境構築完了</Text>
+            </View>
+            <View style={styles.statusItem}>
+              <Text style={styles.statusTextCompleted}>✅ SignLink基本UI実装完了</Text>
+            </View>
+            <View style={styles.statusItem}>
+              <Text style={styles.statusTextInProgress}>🔄 Three.js 3D表示統合中</Text>
+            </View>
+            <View style={styles.statusItem}>
+              <Text style={styles.statusTextPending}>⏳ 手形モデル作成予定</Text>
+            </View>
         </View>
       </ScrollView>
     </SafeAreaView>
